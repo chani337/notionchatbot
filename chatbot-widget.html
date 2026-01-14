@@ -175,7 +175,7 @@
 
     <script>
         // n8n 웹훅 URL
-        const N8N_WEBHOOK_URL = 'https://n8n.smhrd.com/webhook-test/8362726c-6504-483c-955c-1c9d8197c5b4';
+        const N8N_WEBHOOK_URL = 'https://n8n.smhrd.com/webhook/8362726c-6504-483c-955c-1c9d8197c5b4';
 
         const messagesContainer = document.getElementById('chat-messages');
         const chatInput = document.getElementById('chat-input');
@@ -242,9 +242,9 @@
                     const data = await response.json();
                     console.log('받은 데이터:', data); // 디버깅용
                     // AI Agent 응답 읽기
-                    const botResponse = data.output || (Array.isArray(data) && data[0]?.output) || 
-                                       data.response || data.message || '응답을 받았습니다!';
+                    const botResponse = data.reply ?? '응답을 받았습니다!';
                     addMessage(botResponse, false);
+
                 } else {
                     addMessage('죄송합니다. 오류가 발생했습니다. 다시 시도해주세요.', false);
                 }
