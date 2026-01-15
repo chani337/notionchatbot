@@ -3,188 +3,155 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TeachChain AI 챗봇</title>
+  <title>TeachChain Mini Bot</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", sans-serif;
       background: transparent;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* ✅ TeachChain / Notion 톤: 깔끔한 카드형 위젯 */
-    #chat-container {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
       width: 100%;
-      max-width: 100%;
-      margin: 0 auto;
-      background: #ffffff;
-      border-radius: 12px;
-      overflow: hidden;
-      border: 1px solid #e5e7eb;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      height: 100%;
     }
 
-    /* ✅ 상단 헤더: TeachChain 블루 */
+    /* 🔹 전체 위젯 컨테이너 */
+    #chat-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    /* 🔹 상단 바 - 아주 컴팩트 */
     #chat-header {
       background: #0B7CC1;
       color: white;
-      padding: 12px 14px;
+      padding: 6px 8px;
+      font-size: 12px;
       font-weight: 700;
-      font-size: 13px;
       display: flex;
       align-items: center;
-      gap: 8px;
-      letter-spacing: -0.2px;
+      gap: 6px;
     }
 
-    #chat-header .badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 2px 8px;
-      font-size: 11px;
-      font-weight: 700;
-      background: rgba(255,255,255,0.18);
-      border: 1px solid rgba(255,255,255,0.25);
+    #chat-header span {
+      font-size: 10px;
+      font-weight: 600;
+      background: rgba(255,255,255,0.2);
+      padding: 2px 6px;
       border-radius: 999px;
     }
 
-    /* ✅ 메시지 영역: 노션 느낌의 연한 회색 배경 */
+    /* 🔹 메시지 영역 */
     #chat-messages {
       flex: 1;
       overflow-y: auto;
-      padding: 14px;
+      padding: 6px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      background: #f6f7f9;
+      gap: 6px;
+      background: #f8f9fb;
     }
-
-    /* 스크롤바(웹킷) - 너무 튀지 않게 */
-    #chat-messages::-webkit-scrollbar { width: 8px; }
-    #chat-messages::-webkit-scrollbar-thumb {
-      background: #d1d5db;
-      border-radius: 8px;
-    }
-    #chat-messages::-webkit-scrollbar-track { background: transparent; }
 
     .message {
-      max-width: 85%;
-      padding: 10px 12px;
-      border-radius: 10px;
-      word-wrap: break-word;
+      max-width: 100%;
+      padding: 6px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      line-height: 1.4;
+      word-break: break-word;
       white-space: pre-wrap;
-      font-size: 13px;
-      line-height: 1.5;
-      animation: fadeIn 0.2s ease-in;
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ✅ 사용자 메시지: TeachChain 블루 */
     .message.user {
       align-self: flex-end;
       background: #0B7CC1;
       color: #ffffff;
-      border: 1px solid rgba(0,0,0,0.03);
-      border-bottom-right-radius: 4px;
     }
 
-    /* ✅ 봇 메시지: 노션 카드형 */
     .message.bot {
       align-self: flex-start;
       background: #ffffff;
       color: #111827;
       border: 1px solid #e5e7eb;
-      border-bottom-left-radius: 4px;
     }
 
-    /* ✅ typing */
-    .message.typing {
-      background: #ffffff;
-      border: 1px solid #e5e7eb;
-      padding: 10px 14px;
-    }
-
-    .typing-indicator { display: flex; gap: 4px; align-items: center; }
-    .typing-indicator span {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #0B7CC1;
-      animation: typing 1.2s infinite;
-    }
-    .typing-indicator span:nth-child(2) { animation-delay: 0.15s; }
-    .typing-indicator span:nth-child(3) { animation-delay: 0.3s; }
-
-    @keyframes typing {
-      0%, 60%, 100% { transform: translateY(0); opacity: 0.6; }
-      30% { transform: translateY(-6px); opacity: 1; }
-    }
-
-    /* ✅ 입력 영역: 노션 스타일 */
+    /* 🔹 입력 영역 */
     #chat-input-container {
-      padding: 10px;
-      background: #ffffff;
-      border-top: 1px solid #e5e7eb;
       display: flex;
-      gap: 8px;
-      align-items: center;
+      gap: 4px;
+      padding: 6px;
+      border-top: 1px solid #e5e7eb;
+      background: #ffffff;
     }
 
     #chat-input {
       flex: 1;
-      padding: 10px 12px;
+      padding: 6px 8px;
       border: 1px solid #d1d5db;
-      border-radius: 8px;
-      font-size: 13px;
+      border-radius: 6px;
+      font-size: 11px;
       outline: none;
-      transition: border-color 0.15s, box-shadow 0.15s;
-      background: #ffffff;
     }
 
     #chat-input:focus {
       border-color: #0B7CC1;
-      box-shadow: 0 0 0 3px rgba(11,124,193,0.15);
     }
 
     #send-button {
-      padding: 10px 14px;
+      padding: 6px 10px;
       background: #0B7CC1;
       color: white;
-      border: 1px solid rgba(0,0,0,0.03);
-      border-radius: 8px;
+      border: none;
+      border-radius: 6px;
+      font-size: 11px;
       font-weight: 700;
-      font-size: 13px;
       cursor: pointer;
-      transition: transform 0.05s, background 0.15s;
-      white-space: nowrap;
     }
 
-    #send-button:hover { background: #0969a2; }
-    #send-button:active { transform: translateY(1px); }
-
     #send-button:disabled {
-      background: #c7cdd6;
+      background: #cbd5e1;
       cursor: not-allowed;
     }
 
-    /* ✅ 하단 안내문(옵션) */
-    .hint {
-      font-size: 11px;
-      color: #6b7280;
-      padding: 8px 12px 0;
+    /* 🔹 타이핑 */
+    .message.typing {
       background: #ffffff;
-      border-top: 0;
+      border: 1px solid #e5e7eb;
+      padding: 6px 8px;
+    }
+
+    .typing-indicator {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .typing-indicator span {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #0B7CC1;
+      animation: typing 1.2s infinite;
+    }
+
+    .typing-indicator span:nth-child(2) { animation-delay: 0.15s; }
+    .typing-indicator span:nth-child(3) { animation-delay: 0.3s; }
+
+    @keyframes typing {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+      30% { transform: translateY(-4px); opacity: 1; }
+    }
+
+    /* 🔹 스크롤바 최소화 */
+    #chat-messages::-webkit-scrollbar { width: 4px; }
+    #chat-messages::-webkit-scrollbar-thumb {
+      background: #d1d5db;
+      border-radius: 4px;
     }
   </style>
 </head>
@@ -192,19 +159,18 @@
 <body>
   <div id="chat-container">
     <div id="chat-header">
-      🤖 TeachChain AI 도우미
-      <span class="badge">OFFICIAL</span>
+      🤖 AI 도우미 <span>TeachChain</span>
     </div>
 
     <div id="chat-messages">
-      <div class="message bot">안녕하세요! TeachChain 교안/강의자료 관련 질문을 도와드릴게요 😊</div>
+      <div class="message bot">교안 관련 질문 도와드려요 🙂</div>
     </div>
 
     <div id="chat-input-container">
       <input
         type="text"
         id="chat-input"
-        placeholder="질문을 입력하세요… (예: LangChain 교안 있어?)"
+        placeholder="질문…"
         autocomplete="off"
       />
       <button id="send-button">전송</button>
@@ -212,7 +178,6 @@
   </div>
 
   <script>
-    // ✅ Cloudflare Worker URL (프론트는 여기만 호출)
     const N8N_WEBHOOK_URL = 'https://fragrant-pond-159b.chani7873.workers.dev/';
 
     const messagesContainer = document.getElementById('chat-messages');
@@ -245,18 +210,10 @@
       if (typingIndicator) typingIndicator.remove();
     }
 
-    // ✅ 응답이 JSON이든 텍스트든 안전하게 읽기
     async function readResponseSafely(response) {
-      const raw = await response.text(); // 무조건 text로 먼저 받기
+      const raw = await response.text();
       if (!raw) return { raw: '', json: null };
 
-      const ct = (response.headers.get('Content-Type') || '').toLowerCase();
-      if (ct.includes('application/json')) {
-        try { return { raw, json: JSON.parse(raw) }; }
-        catch { return { raw, json: null }; }
-      }
-
-      // 헤더가 JSON이 아니어도 파싱 시도
       try { return { raw, json: JSON.parse(raw) }; }
       catch { return { raw, json: null }; }
     }
@@ -265,22 +222,15 @@
       const j = parsed.json;
 
       if (j && typeof j === 'object') {
-        if (typeof j.reply === 'string' && j.reply.trim()) return j.reply;
-        if (typeof j.output === 'string' && j.output.trim()) return j.output;
-        if (typeof j.text === 'string' && j.text.trim()) return j.text;
-        if (typeof j.message === 'string' && j.message.trim()) return j.message;
-
-        if (Array.isArray(j) && j.length > 0) {
-          const first = j[0];
-          if (first?.reply) return first.reply;
-          if (first?.output) return first.output;
-          if (first?.text) return first.text;
-        }
+        if (j.reply) return j.reply;
+        if (j.output) return j.output;
+        if (j.text) return j.text;
+        if (j.message) return j.message;
       }
 
-      if (parsed.raw && parsed.raw.trim()) return parsed.raw;
+      if (parsed.raw) return parsed.raw;
 
-      return '응답이 비어있습니다. (n8n Respond to Webhook 설정 확인 필요)';
+      return '응답 없음';
     }
 
     async function sendMessage() {
@@ -305,20 +255,14 @@
         hideTypingIndicator();
 
         const parsed = await readResponseSafely(response);
+        const botResponse = extractBotReply(parsed);
 
-        if (response.ok) {
-          const botResponse = extractBotReply(parsed);
-          addMessage(botResponse, false);
-        } else {
-          const errMsg = extractBotReply(parsed);
-          addMessage(errMsg || '오류가 발생했습니다. 다시 시도해주세요.', false);
-          console.error('HTTP Error:', response.status, parsed.raw);
-        }
+        addMessage(botResponse || '응답이 없습니다.', false);
 
       } catch (error) {
         hideTypingIndicator();
-        console.error('Network/Error:', error);
-        addMessage('연결에 문제가 있습니다. n8n 웹훅 URL을 확인해주세요.', false);
+        addMessage('연결 오류', false);
+        console.error(error);
       }
 
       sendButton.disabled = false;
@@ -329,8 +273,6 @@
     chatInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') sendMessage();
     });
-
-    chatInput.focus();
   </script>
 </body>
 </html>
