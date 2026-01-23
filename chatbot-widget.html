@@ -7,7 +7,6 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    /* iframe이 주는 크기를 100% 꽉 채우도록 */
     html, body {
       width: 100%;
       height: 100%;
@@ -26,7 +25,6 @@
       background: transparent;
     }
 
-    /* ✅ 고정폭/고정높이 제거 -> 노션 embed 크기 따라 자동 확장 */
     #chat-container {
       width: 100%;
       height: 100%;
@@ -88,6 +86,7 @@
       background: #fff;
       color: #111827;
       border: 1px solid #e5e7eb;
+      border: 1px solid #e5e7eb;
     }
 
     #chat-input-container {
@@ -147,6 +146,52 @@
 
     #chat-messages::-webkit-scrollbar { width: 6px; }
     #chat-messages::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 6px; }
+
+    /* ✅ 링크 리스트 UI */
+    .links-box{
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .link-item{
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 9px;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+      background: #ffffff;
+      color: #0B7CC1;
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .link-item:hover{
+      filter: brightness(0.98);
+    }
+
+    .link-badge{
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: #eef6ff;
+      color: #0B7CC1;
+      border: 1px solid #dbeafe;
+      flex: 0 0 auto;
+      white-space: nowrap;
+    }
+
+    .link-title{
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   </style>
 </head>
 
@@ -167,16 +212,56 @@
   </div>
 
   <script>
+    // ✅ 너의 웹훅 주소
     const N8N_WEBHOOK_URL = 'https://fragrant-pond-159b.chani7873.workers.dev/';
 
     const messagesContainer = document.getElementById('chat-messages');
     const chatInput = document.getElementById('chat-input');
     const sendButton = document.getElementById('send-button');
 
-    function addMessage(text, isUser = false) {
+    /**
+     * ✅ 메시지 추가
+     * - bot 메시지에서 links가 있으면 말풍선 아래에 링크 버튼/리스트를 붙임
+     */
+    function addMessage(text, isUser = false, links = null) {
       const messageDiv = document.createElement('div');
       messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
       messageDiv.textContent = text;
+
+      // ✅ 봇 메시지에 links가 있으면, DOM으로 안전하게 링크 렌더링
+      if (!isUser && Array.isArray(links) && links.length) {
+        const box = document.createElement('div');
+        box.className = 'links-box';
+
+        links.forEach((l) => {
+          if (!l || !l.url) return;
+
+          const a = document.createElement('a');
+          a.className = 'link-item';
+          a.href = l.url;
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+
+          const badge = document.createElement('span');
+          badge.className = 'link-badge';
+          badge.textContent =
+            l.source === 'recommend' ? '추천' :
+            (l.source === 'list' ? '목록' : '링크');
+
+          const title = document.createElement('span');
+          title.className = 'link-title';
+          title.textContent = l.title || l.url;
+
+          a.appendChild(badge);
+          a.appendChild(title);
+          box.appendChild(a);
+        });
+
+        if (box.childElementCount > 0) {
+          messageDiv.appendChild(box);
+        }
+      }
+
       messagesContainer.appendChild(messageDiv);
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
@@ -224,33 +309,42 @@
       return '';
     }
 
-    function extractBotReply(parsed) {
+    /**
+     * ✅ reply + links를 함께 추출
+     * - 이상적: { reply: "...", links: [...] }
+     * - 차선: { output: "..." } -> output에서 reply 추출, links는 같은 레벨에 있으면 사용
+     */
+    function extractBotPayload(parsed) {
       const j = parsed.json;
 
-      // 1) 가장 이상적인 형태: { reply: "..." }
-      if (j && typeof j === 'object' && typeof j.reply === 'string' && j.reply.trim()) {
-        return j.reply.trim();
-      }
-
-      // 2) { output: "```json ...``` 설명" } 형태면 reply만 추출
-      if (j && typeof j === 'object' && typeof j.output === 'string' && j.output.trim()) {
-        const extracted = extractReplyFromText(j.output);
-        return (extracted || j.output).trim();
-      }
-
-      // 3) 기타 필드
       if (j && typeof j === 'object') {
-        if (typeof j.message === 'string' && j.message.trim()) return j.message.trim();
-        if (typeof j.text === 'string' && j.text.trim()) return j.text.trim();
+        const links = Array.isArray(j.links) ? j.links : null;
+
+        // 1) { reply: "...", links: [...] }
+        if (typeof j.reply === 'string' && j.reply.trim()) {
+          return { reply: j.reply.trim(), links };
+        }
+
+        // 2) { output: "..." } 형태
+        if (typeof j.output === 'string' && j.output.trim()) {
+          const extracted = extractReplyFromText(j.output);
+          const finalReply = (extracted || j.output).trim();
+          return { reply: finalReply, links };
+        }
+
+        // 3) 기타 필드
+        if (typeof j.message === 'string' && j.message.trim()) return { reply: j.message.trim(), links };
+        if (typeof j.text === 'string' && j.text.trim()) return { reply: j.text.trim(), links };
       }
 
       // 4) raw 자체에서 reply 추출 시도
       const extractedRaw = extractReplyFromText(parsed.raw);
-      if (extractedRaw) return extractedRaw.trim();
+      if (extractedRaw) return { reply: extractedRaw.trim(), links: null };
 
       // 5) 마지막 fallback
-      if (parsed.raw && parsed.raw.trim()) return parsed.raw.trim();
-      return '응답이 없습니다.';
+      if (parsed.raw && parsed.raw.trim()) return { reply: parsed.raw.trim(), links: null };
+
+      return { reply: '응답이 없습니다.', links: null };
     }
 
     async function sendMessage() {
@@ -270,10 +364,10 @@
         });
 
         const parsed = await readResponseSafely(response);
-        const botResponse = extractBotReply(parsed);
+        const payload = extractBotPayload(parsed);
 
         hideTypingIndicator();
-        addMessage(botResponse, false);
+        addMessage(payload.reply, false, payload.links);
 
       } catch (err) {
         hideTypingIndicator();
